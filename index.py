@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import yt_dlp
 
+
 # 创建一个 Flask 应用
 app = Flask(__name__)
 
@@ -26,7 +27,7 @@ def video():
             # 如果是 NSFW 的内容，重新创建 ydl 对象，传入用户名和密码的参数
             ydl = yt_dlp.YoutubeDL({'username': 'mrili15', 'password': 'ml12345601'})
             # 重新提取视频信息
-            info = ydl.extract_info(url, download=False)
+            info = ydl.extract_info(url, download=False, nocheckcertificate=True) # 添加 nocheckcertificate 参数
             return jsonify({'error': 'This content is marked as NSFW'})
         
         # 过滤掉包含"hls"的格式
@@ -46,4 +47,5 @@ def video():
 # 运行应用
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=False)
+
 
