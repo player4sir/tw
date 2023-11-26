@@ -34,8 +34,6 @@ def video():
 
         # 返回一个 JSON 格式的响应，包含视频的元数据和下载链接
         return jsonify({
-            'title': info['title'],
-            'duration': info['duration'],
             'formats': [{'format': f['format'], 'url': f['url']} for f in filtered_formats]
         })
 
