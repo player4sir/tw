@@ -13,16 +13,20 @@ def video():
     if not url:
         return jsonify({'error': 'No url provided'})
 
-    # 创建一个 yt-dlp 下载器对象
-    # 注意: 使用明文密码不安全，建议使用更安全的认证方法，如 OAuth 或 API 密钥
-    ydl = yt_dlp.YoutubeDL({'username': 'mrili15', 'password': 'ml12345601'})
-
     # 尝试提取视频信息
     try:
+        # 创建一个 yt-dlp 下载器对象
+        # 注意: 使用明文密码不安全，建议使用更安全的认证方法，如 OAuth 或 API 密钥
+        ydl = yt_dlp.YoutubeDL({})
+        
         info = ydl.extract_info(url, download=False)
         
         # Check if the content is marked as NSFW
         if 'NSFW' in info.get('tags', []):
+            # 如果是 NSFW 的内容，重新创建 ydl 对象，传入用户名和密码的参数
+            ydl = yt_dlp.YoutubeDL({'username': 'mrili15', 'password': 'ml12345601'})
+            # 重新提取视频信息
+            info = ydl.extract_info(url, download=False)
             return jsonify({'error': 'This content is marked as NSFW'})
         
         # 过滤掉包含"hls"的格式
@@ -42,3 +46,4 @@ def video():
 # 运行应用
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=False)
+
