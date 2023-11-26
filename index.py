@@ -19,16 +19,7 @@ def video():
         # 注意: 使用明文密码不安全，建议使用更安全的认证方法，如 OAuth 或 API 密钥
         ydl = yt_dlp.YoutubeDL({})
         
-        info = ydl.extract_info(url, download=False)
-        
-        # Check if the content is marked as NSFW
-        if 'NSFW' in info.get('tags', []):
-            # 如果是 NSFW 的内容，重新创建 ydl 对象，传入用户名和密码的参数
-            ydl = yt_dlp.YoutubeDL({'username': 'mrili15', 'password': 'ml12345601'})
-            # 重新提取视频信息，使用备用端点，忽略 SSL 证书的验证
-            info = ydl.extract_info(url, download=False, nocheckcertificate=True, extractor_args={'twitter': 'api=syndication'}) # 添加 extractor_args 参数
-            return jsonify({'error': 'This content is marked as NSFW'})
-        
+        info = ydl.extract_info(url, download=False)       
         # 过滤掉包含"hls"的格式
         filtered_formats = [f for f in info['formats'] if 'hls' not in f['format']]
 
