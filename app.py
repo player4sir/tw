@@ -1,83 +1,60 @@
-# 导入所需的库
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-# from selenium.webdriver.chrome.service import Service
-from bs4 import BeautifulSoup
+# 导入所需的模块
 from flask import Flask, request, jsonify
+from flask_restful import Resource, Api
+import yt_dlp
 
-# 创建一个Flask应用
+# 创建一个 Flask 应用和一个 API 对象
 app = Flask(__name__)
+api = Api(app)
 
-# 创建一个全局变量，用于存储浏览器实例
-global_driver = None
+# 定义一个资源类，用于处理视频网址的请求
+class Video(Resource):
+    def get(self):
+        # 获取请求中的网址参数
+        url = request.args.get('url')
+        # 如果没有提供网址，返回一个错误信息
+        if not url:
+            return jsonify({'error': 'No url provided'})
+        # 创建一个 yt-dlp 下载器对象
+        ydl = yt_dlp.YoutubeDL()
+        # 尝试提取视频信息
+        try:
+            info = ydl.extract_info(url, download=False)
+        except yt_dlp.utils.DownloadError as e:
+            # 如果出现错误，返回一个错误信息
+            return jsonify({'error': str(e)})
+        # 生成一个文件名
+        filename = ydl.prepare_filename(info)
+        
+        # 获取最佳的音频和视频格式
+        best_audio = None
+        best_video = None
+        for fmt in info['formats']:
+            if 'audio' in fmt['format']:
+                if best_audio is None or (fmt['abr'] and (not best_audio or fmt['abr'] > best_audio['abr'])):
+                    best_audio = fmt
+            elif 'video' in fmt['format']:
+                if best_video is None or (fmt['height'] and (not best_video or fmt['height'] > best_video['height'])):
+                    best_video = fmt
 
-# 定义一个函数，用于初始化浏览器实例
-def init_driver():
-    global global_driver
-    # 使用webdriver_manager自动下载并设置ChromeDriver
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
-    # 创建Headless Chrome浏览器实例
-    # service = webdriver.ChromeService(executable_path='/app/chromedriver')
-    driver = webdriver.Chrome(options=options)
-    # 设置keep_alive参数为True，保持远程连接的活跃
-    driver.command_executor.keep_alive = True
-    # 返回浏览器实例
-    return driver
+        # 返回一个 JSON 格式的响应，包含视频的元数据和下载链接
+        response_data = {
+            'title': info['title'],
+            'duration': info['duration'],
+            'filename': filename,
+            'formats': [{'format': f['format'], 'url': f['url']} for f in info['formats']]
+        }
 
-# 定义一个路由，接收目标链接作为参数，返回结果
-@app.route('/api', methods=['GET'])
-def api():
-    # 获取目标链接
-    target_link = request.args.get('url', None)
-    # 如果没有提供目标链接，返回错误信息
-    if not target_link:
-        return jsonify({'error': '请提供目标链接'})
-    # 获取全局变量
-    global global_driver
-    # 如果全局变量为空，初始化浏览器实例
-    if not global_driver:
-        global_driver = init_driver()
-    # 打开网页
-    url = "https://ssstwitter.com/"
-    global_driver.get(url)
+        if best_audio and best_video:
+            response_data['best_format'] = f'{best_audio["format"]} + {best_video["format"]}'
+        else:
+            response_data['best_format'] = 'N/A'
 
-    # 使用显示等待，等待输入框元素出现
-    wait = WebDriverWait(global_driver, 10)
-    input_element = wait.until(EC.presence_of_element_located(("id", "main_page_text")))
-    # 输入正确格式的链接
-    input_element.clear()
-    input_element.send_keys(target_link)
+        return jsonify(response_data)
 
-    # 提交表单
-    global_driver.find_element("id", "submit").click()
-
-    # 使用显示等待，等待重定向完成
-    wait.until(EC.url_matches("https://ssstwitter.com/result_.*"))
-    soup = BeautifulSoup(global_driver.page_source, 'html.parser')
-    result_overlay_div = soup.find('div', class_='result_overlay')
-    # 获取结果
-    data_list = []
-    if result_overlay_div:
-        all_links = result_overlay_div.find_all('a')
-        for link in all_links:
-            href = link.get('href', '')
-            text = link.get_text(strip=True)
-            data_list.append({'res': text, 'link': href})
-    else:
-        data_list.append({'error': '未找到包含目标<a>元素的<div>元素'})
-
-    # 返回结果
-    return jsonify(data_list)
+# 将资源类添加到 API 对象中，指定路由
+api.add_resource(Video, '/api')
 
 # 运行应用
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    app.run(debug=True)
