@@ -26,8 +26,8 @@ def init_driver():
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
     # 创建Headless Chrome浏览器实例
-    service = Service('/app/chromedriver', executable_path='/app/chromedriver')
-    driver = webdriver.Chrome(service=service,options=options)
+    executable_path = '/app/chromedriver'
+    driver = webdriver.Chrome(executable_path=executable_path,options=options)
     # 设置keep_alive参数为True，保持远程连接的活跃
     driver.command_executor.keep_alive = True
     # 返回浏览器实例
