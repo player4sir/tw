@@ -1,12 +1,10 @@
 # 导入所需的库
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
-# import json
 from flask import Flask, request, jsonify
 
 # 创建一个Flask应用
@@ -19,15 +17,15 @@ global_driver = None
 def init_driver():
     global global_driver
     # 使用webdriver_manager自动下载并设置ChromeDriver
-    driver_path = ChromeDriverManager().install()
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
-    # 创建Chrome浏览器实例，指定ChromeDriver路径
-    chrome_service = ChromeService(executable_path=driver_path)
-    driver = webdriver.Chrome(service=chrome_service,options=options)
+    # 创建Headless Chrome浏览器实例
+    driver = webdriver.Chrome(options=options)
     # 设置keep_alive参数为True，保持远程连接的活跃
     driver.command_executor.keep_alive = True
     # 返回浏览器实例
@@ -80,4 +78,4 @@ def api():
 
 # 运行应用
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=False)
+    app.run(host='0.0.0.0', debug=False)
