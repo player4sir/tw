@@ -1,4 +1,4 @@
-Flask==3.0.0
+Flask==2.2.5
 Flask-RESTful==0.3.10
 yt-dlp==2023.11.16
 Gunicorn==20.1.0
