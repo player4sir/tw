@@ -12,8 +12,8 @@ loop = asyncio.get_event_loop()
 async def init_browser():
     global global_browser
     # 创建一个无头浏览器实例
-    # browser = await launch(headless=False, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
-    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox'])
+    # browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox'])
+    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop, executablePath='/opt/render/.local/share/pyppeteer/local-chromium/588429/chrome-linux/chrome', args=['--no-sandbox', '--disable-setuid-sandbox'])
     # 返回浏览器实例
     return browser
 
