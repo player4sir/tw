@@ -10,7 +10,7 @@ loop = asyncio.get_event_loop()
 
 async def init_browser():
     global global_browser
-    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
+    browser = await launch(headless=False, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
     return browser
 
 async def get_result(target_link):
