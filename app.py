@@ -1,60 +1,82 @@
-# 导入所需的模块
+from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
-from flask_restful import Resource, Api
-import yt_dlp
+import asyncio
+from pyppeteer import launch
 
-# 创建一个 Flask 应用和一个 API 对象
+# 创建一个Flask应用
 app = Flask(__name__)
-api = Api(app)
 
-# 定义一个资源类，用于处理视频网址的请求
-class Video(Resource):
-    def get(self):
-        # 获取请求中的网址参数
-        url = request.args.get('url')
-        # 如果没有提供网址，返回一个错误信息
-        if not url:
-            return jsonify({'error': 'No url provided'})
-        # 创建一个 yt-dlp 下载器对象
-        ydl = yt_dlp.YoutubeDL()
-        # 尝试提取视频信息
-        try:
-            info = ydl.extract_info(url, download=False)
-        except yt_dlp.utils.DownloadError as e:
-            # 如果出现错误，返回一个错误信息
-            return jsonify({'error': str(e)})
-        # 生成一个文件名
-        filename = ydl.prepare_filename(info)
-        
-        # 获取最佳的音频和视频格式
-        best_audio = None
-        best_video = None
-        for fmt in info['formats']:
-            if 'audio' in fmt['format']:
-                if best_audio is None or (fmt['abr'] and (not best_audio or fmt['abr'] > best_audio['abr'])):
-                    best_audio = fmt
-            elif 'video' in fmt['format']:
-                if best_video is None or (fmt['height'] and (not best_video or fmt['height'] > best_video['height'])):
-                    best_video = fmt
+# 创建一个全局变量，用于存储浏览器实例和事件循环
+global_browser = None
+loop = asyncio.get_event_loop()
 
-        # 返回一个 JSON 格式的响应，包含视频的元数据和下载链接
-        response_data = {
-            'title': info['title'],
-            'duration': info['duration'],
-            'filename': filename,
-            'formats': [{'format': f['format'], 'url': f['url']} for f in info['formats']]
-        }
+# 定义一个异步函数，用于初始化浏览器实例
+async def init_browser():
+    global global_browser
+    # 创建一个无头浏览器实例
+    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
+    # 返回浏览器实例
+    return browser
 
-        if best_audio and best_video:
-            response_data['best_format'] = f'{best_audio["format"]} + {best_video["format"]}'
-        else:
-            response_data['best_format'] = 'N/A'
+# 定义一个异步函数，用于打开网页并获取结果
+async def get_result(target_link):
+    global global_browser
+    # 如果全局变量为空，初始化浏览器实例
+    if not global_browser:
+        global_browser = await init_browser()
+    # 创建一个新的浏览器页面
+    page = await global_browser.newPage()
+    # 设置用户代理
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+    # 打开网页
+    url = "https://ssstwitter.com/"
+    await page.goto(url)
 
-        return jsonify(response_data)
+    # 等待输入框元素出现
+    input_element = await page.waitForSelector("#main_page_text")
+    # 输入正确格式的链接
+    await input_element.type(target_link)
 
-# 将资源类添加到 API 对象中，指定路由
-api.add_resource(Video, '/api')
+    # 提交表单
+    await page.click("#submit")
+
+    # 等待重定向完成
+    await page.waitForNavigation()
+
+    # 获取页面源码
+    content = await page.content()
+    soup = BeautifulSoup(content, 'html.parser')
+    result_overlay_div = soup.find('div', class_='result_overlay')
+    # 获取结果
+    data_list = []
+    if result_overlay_div:
+        all_links = result_overlay_div.find_all('a')
+        for link in all_links:
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            data_list.append({'res': text, 'link': href})
+    else:
+        data_list.append({'error': '未找到包含目标<a>元素的<div>元素'})
+
+    # 关闭页面
+    await page.close()
+
+    # 返回结果
+    return data_list
+
+# 定义一个路由，接收目标链接作为参数，返回结果
+@app.route('/api', methods=['GET'])
+def api():
+    # 获取目标链接
+    target_link = request.args.get('url', None)
+    # 如果没有提供目标链接，返回错误信息
+    if not target_link:
+        return jsonify({'error': '请提供目标链接'})
+    # 调用异步函数，获取结果
+    result = loop.run_until_complete(get_result(target_link))
+    # 返回结果
+    return jsonify(result)
 
 # 运行应用
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=False)
+    app.run(host='0.0.0.0', debug=False)
