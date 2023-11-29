@@ -13,7 +13,7 @@ async def init_browser():
     global global_browser
     # 创建一个无头浏览器实例
     # browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox'])
-    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False,loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox'])
+    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False,loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox','--user-data-dir=/tmp'])
     # 返回浏览器实例
     return browser
 
