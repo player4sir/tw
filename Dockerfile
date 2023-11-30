@@ -10,18 +10,15 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建一个工作目录
 WORKDIR /app
 
-# 复制代码到容器中
 COPY . .
 
-RUN npm ci pyppeteer
+RUN pip install -r requirements.txt
 
 ENV PYPPETEER_CHROMIUM_REVISION=800071
 ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
-# 暴露5000端口
 EXPOSE 5000
 
 # 运行Flask应用
