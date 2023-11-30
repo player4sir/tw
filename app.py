@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 import asyncio
 from pyppeteer import launch
+# 导入nest_asyncio包
+import nest_asyncio
 
 # 创建一个Flask应用
 app = Flask(__name__)
@@ -74,10 +76,13 @@ def api():
     if not target_link:
         return jsonify({'error': '请提供目标链接'})
     # 调用异步函数，获取结果
+    # 使用nest_asyncio包，允许事件循环的嵌套使用
+    nest_asyncio.apply()
     result = loop.run_until_complete(get_result(target_link))
     # 返回结果
     return jsonify(result)
 
 # 运行应用
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    # 添加一个参数use_reloader=False，以避免Flask应用在容器中重复启动的问题
+    app.run(host='0.0.0.0', use_reloader=False)
