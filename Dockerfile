@@ -19,7 +19,7 @@ RUN pip install -r requirements.txt
 ENV PYPPETEER_CHROMIUM_REVISION=800071
 ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
-EXPOSE 5000
+EXPOSE 80
 
 # 运行Flask应用
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "80"]
