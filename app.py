@@ -3,20 +3,22 @@ from flask import Flask, request, jsonify
 import asyncio
 from pyppeteer import launch
 
+# 创建一个Flask应用
 app = Flask(__name__)
 
 # 创建一个全局变量，用于存储浏览器实例和事件循环
 global_browser = None
 loop = asyncio.get_event_loop()
 
+# 定义一个异步函数，用于初始化浏览器实例
 async def init_browser():
     global global_browser
     # 创建一个无头浏览器实例
-    # browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox'])
-    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False,loop=loop,args=['--no-sandbox', '--disable-setuid-sandbox','--user-data-dir=/tmp'])
+    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
     # 返回浏览器实例
     return browser
 
+# 定义一个异步函数，用于打开网页并获取结果
 async def get_result(target_link):
     global global_browser
     # 如果全局变量为空，初始化浏览器实例
@@ -77,4 +79,4 @@ def api():
 
 # 运行应用
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, threaded=True)
+    app.run(host='0.0.0.0', debug=False)
