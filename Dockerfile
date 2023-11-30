@@ -1,63 +1,28 @@
-# 使用官方的 Python 镜像作为基础镜像
-FROM python:3.10.0
+FROM python:3.10
 
-# 将工作目录设置为 /app
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建一个工作目录
 WORKDIR /app
 
-# 将当前目录的内容复制到容器中的 /app
-COPY . /app
-# 设置环境变量
-ENV PYPPETEER_NO_SANDBOX=1
-ENV FLASK_APP=app.py
-# 安装依赖项
-RUN apt-get update && \
-    apt-get install -yq --no-install-recommends \
-    wget \
-    gconf-service \
-    libasound2 \
-    libatk1.0-0 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgcc1 \
-    libgconf-2-4 \
-    libgdk-pixbuf2.0-0 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libstdc++6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    ca-certificates \
-    fonts-liberation \
-    libappindicator1 \
-    libnss3 \
-    lsb-release \
-    xdg-utils \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# 复制代码到容器中
+COPY . .
 
-# 安装 Python 依赖项
-RUN pip install --no-cache-dir -r requirements.txt
-RUN apt-get install -yq libglib2.0-0 libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1
-RUN apt-get install -yq libgbm1
-# 为 Flask 应用程序暴露端口 80
-EXPOSE 80
+RUN npm ci pyppeteer
 
-# 运行 Flask 应用程序
-CMD ["flask", "run", "--host", "0.0.0.0", "--port", "80"]
+ENV PYPPETEER_CHROMIUM_REVISION=800071
+ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+
+# 暴露5000端口
+EXPOSE 5000
+
+# 运行Flask应用
+CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
