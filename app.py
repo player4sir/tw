@@ -93,4 +93,4 @@ def api():
 # 运行应用
 if __name__ == '__main__':
     # 添加一个参数use_reloader=False，以避免Flask应用在容器中重复启动的问题
-    app.run(host='0.0.0.0', use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, use_reloader=False)
