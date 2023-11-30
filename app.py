@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 import asyncio
 from pyppeteer import launch
-
+import os
 # 创建一个Flask应用
 app = Flask(__name__)
 
@@ -92,5 +92,5 @@ def api():
 
 # 运行应用
 if __name__ == '__main__':
-    # 添加一个参数use_reloader=False，以避免Flask应用在容器中重复启动的问题
-    app.run(host='0.0.0.0', port=$PORT, use_reloader=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, use_reloader=False)
