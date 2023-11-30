@@ -2,41 +2,47 @@ from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 import asyncio
 from pyppeteer import launch
-# 导入nest_asyncio包
-import nest_asyncio
 
 # 创建一个Flask应用
 app = Flask(__name__)
 
-# 创建一个全局变量，用于存储浏览器实例和事件循环
+# 创建一个全局变量，用于存储浏览器实例
 global_browser = None
-loop = asyncio.get_event_loop()
 
 # 定义一个异步函数，用于初始化浏览器实例
 async def init_browser():
-    global global_browser
+    # 创建一个新的事件循环
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     # 创建一个无头浏览器实例
     # 添加一些必要的参数，例如--no-sandbox和--disable-setuid-sandbox
     browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop, args=['--no-sandbox', '--disable-setuid-sandbox'])
+    
     # 返回浏览器实例
     return browser
 
 # 定义一个异步函数，用于打开网页并获取结果
 async def get_result(target_link):
     global global_browser
+
     # 如果全局变量为空，初始化浏览器实例
     if not global_browser:
         global_browser = await init_browser()
+
     # 创建一个新的浏览器页面
     page = await global_browser.newPage()
+    
     # 设置用户代理
     await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+    
     # 打开网页
     url = "https://ssstwitter.com/"
     await page.goto(url)
 
     # 等待输入框元素出现
     input_element = await page.waitForSelector("#main_page_text")
+    
     # 输入正确格式的链接
     await input_element.type(target_link)
 
@@ -50,6 +56,7 @@ async def get_result(target_link):
     content = await page.content()
     soup = BeautifulSoup(content, 'html.parser')
     result_overlay_div = soup.find('div', class_='result_overlay')
+    
     # 获取结果
     data_list = []
     if result_overlay_div:
@@ -72,13 +79,14 @@ async def get_result(target_link):
 def api():
     # 获取目标链接
     target_link = request.args.get('url', None)
+    
     # 如果没有提供目标链接，返回错误信息
     if not target_link:
         return jsonify({'error': '请提供目标链接'})
+
     # 调用异步函数，获取结果
-    # 使用nest_asyncio包，允许事件循环的嵌套使用
-    nest_asyncio.apply()
-    result = loop.run_until_complete(get_result(target_link))
+    result = asyncio.run(get_result(target_link))
+    
     # 返回结果
     return jsonify(result)
 
