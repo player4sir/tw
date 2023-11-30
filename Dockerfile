@@ -21,7 +21,7 @@ ENV PYPPETEER_CHROMIUM_REVISION=800071
 ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
 # 映射端口
-EXPOSE $PORT
+EXPOSE ${PORT}
 
 RUN pip install gunicorn
 
