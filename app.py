@@ -14,7 +14,8 @@ loop = asyncio.get_event_loop()
 async def init_browser():
     global global_browser
     # 创建一个无头浏览器实例
-    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop)
+    # 添加一些必要的参数，例如--no-sandbox和--disable-setuid-sandbox
+    browser = await launch(headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False, loop=loop, args=['--no-sandbox', '--disable-setuid-sandbox'])
     # 返回浏览器实例
     return browser
 
