@@ -6,7 +6,9 @@ WORKDIR /app
 
 # 将当前目录的内容复制到容器中的 /app
 COPY . /app
-
+# 设置环境变量
+ENV PYPPETEER_NO_SANDBOX=1
+ENV FLASK_APP=app.py
 # 安装依赖项
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
@@ -52,13 +54,10 @@ RUN apt-get update && \
 
 # 安装 Python 依赖项
 RUN pip install --no-cache-dir -r requirements.txt
-
+RUN apt-get install -yq libglib2.0-0 libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1
+RUN apt-get install -yq libgbm1
 # 为 Flask 应用程序暴露端口 80
 EXPOSE 80
-
-# 设置环境变量
-ENV PYPPETEER_NO_SANDBOX=1
-ENV FLASK_APP=app.py
 
 # 运行 Flask 应用程序
 CMD ["flask", "run", "--host", "0.0.0.0", "--port", "80"]
