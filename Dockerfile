@@ -10,16 +10,18 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
+# 创建一个工作目录
 WORKDIR /app
 
+# 复制代码到容器中
 COPY . .
 
 RUN pip install -r requirements.txt
-
 ENV PYPPETEER_CHROMIUM_REVISION=800071
 ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
-EXPOSE 80
+EXPOSE 5000
 
-# 运行Flask应用
-CMD ["flask", "run", "--host", "0.0.0.0", "--port", "80"]
+RUN pip install gunicorn
+
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
