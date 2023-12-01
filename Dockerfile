@@ -1,29 +1,26 @@
-FROM python:3.10
+# 使用基于 Alpine Linux 的 Python 3.9 镜像
+FROM python:3.9-alpine
 
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    ca-certificates \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# 创建一个工作目录
+# 设置工作目录为 /app
 WORKDIR /app
 
-# 复制代码到容器中
+# 复制当前目录下的所有文件到容器中
 COPY . .
 
-RUN pip install -r requirements.txt
-ENV PYPPETEER_CHROMIUM_REVISION=800071
-ENV PYPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-# 映射端口
+# 更新Alpine Linux仓库
+RUN apk update && apk upgrade
+RUN sed -i -e 's/http:/https:/' /etc/apk/repositories
+# 安装 Python 依赖包
+RUN pip install --no-cache-dir -r requirements.txt
+# 安装 Pyppeteer 的依赖，包括 Chromium 浏览器
+RUN apk add --no-cache openssl ca-certificates chromium nss freetype freetype-dev harfbuzz ttf-freefont
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# 暴露 5000 端口
 EXPOSE 5000
 
-RUN pip install gunicorn
-
-# 运行应用
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+# 启动 Python 应用
+CMD ["python", "app.py"]
